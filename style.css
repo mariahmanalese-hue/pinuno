@@ -1,0 +1,95 @@
+body {
+  font-family: 'Courier New', monospace;
+  background-color: #f5e9f7;
+  color: #4b2e5d;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  max-width: 400px;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.flashcard {
+  background-color: #e6d0f2;
+  border: 2px dashed #b48cc4;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #d3b3e5;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.flashcard:hover {
+  transform: scale(1.02);
+}
+
+.controls button {
+  margin: 5px;
+}
+
+button {
+  background-color: #caa7e8;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #b48cc4;
+}
+
+input {
+  padding: 8px;
+  margin: 5px;
+  border: 1px solid #b48cc4;
+  border-radius: 6px;
+  width: 45%;
+}
+
+#quizSection, #mistakeReviewSection {
+  background-color: #f0d9f5;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+#quizOptions button {
+  display: block;
+  margin: 5px auto;
+  padding: 10px;
+  width: 80%;
+  background-color: #caa7e8;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#quizOptions button:hover {
+  background-color: #b48cc4;
+}
+
+#mistakeList {
+  list-style: none;
+  padding: 0;
+}
+
+#mistakeList li {
+  background-color: #e6d0f2;
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 6px;
+}

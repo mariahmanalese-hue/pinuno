@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pinuno</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🌸 Pinuno</h1>
+
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <p id="cardText">Tap a button to begin</p>
+    </div>
+
+    <div class="controls">
+      <button onclick="showPreviousWord()">⏮️ Previous</button>
+      <button onclick="showRandomWord()">🎲 Random</button>
+      <button onclick="showNextWord()">⏭️ Next</button>
+    </div>
+
+    <button onclick="toggleForm()">➕ Add Word</button>
+
+    <div class="form" id="formSection" style="display: none;">
+      <input type="text" id="filipinoInput" placeholder="Filipino word" />
+      <input type="text" id="englishInput" placeholder="English translation" />
+      <button onclick="addWord()">✅ Save</button>
+    </div>
+
+    <button onclick="startQuiz()">📝 Start Quiz</button>
+    <button id="reviewMistakesBtn" onclick="showIncorrectWords()" style="display: none;">📚 Review Mistakes</button>
+
+    <div id="quizSection" style="display: none;">
+      <h2>📝 Quiz Mode</h2>
+      <p id="quizQuestion"></p>
+      <div id="quizOptions"></div>
+      <p id="quizFeedback"></p>
+      <button onclick="nextQuizQuestion()">Next</button>
+      <button onclick="endQuiz()">❌ End Quiz</button>
+      <button id="restartQuizBtn" onclick="restartQuiz()" style="display: none;">🔁 Restart Quiz</button>
+    </div>
+
+    <div id="mistakeReviewSection" style="display: none;">
+      <h3>Review Incorrect Answers</h3>
+      <ul id="mistakeList"></ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
