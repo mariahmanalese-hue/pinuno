@@ -32,11 +32,12 @@
 
     <button onclick="toggleForm()">➕ Add Word</button>
 
-    <div class="form" id="formSection" style="display: none;">
-      <input type="text" id="filipinoInput" placeholder="Filipino word" />
-      <input type="text" id="englishInput" placeholder="English translation" />
-      <button onclick="addWord()">✅ Save</button>
-    </div>
+<div class="form" id="formSection" style="display: none;">
+  <button class="close-btn" onclick="toggleForm()">❌</button>
+  <input type="text" id="filipinoInput" placeholder="Filipino word" />
+  <input type="text" id="englishInput" placeholder="English translation" />
+  <button onclick="addWord()">✅ Save</button>
+</div>
 
     <button onclick="startQuiz()">📝 Start Quiz</button>
     <button id="reviewMistakesBtn" onclick="showIncorrectWords()" style="display: none;">📚 Review Mistakes</button>
