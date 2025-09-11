@@ -80,27 +80,49 @@ function toggleForm() {
 function addWord() {
   const filipino = document.getElementById("filipinoInput").value.trim();
   const english = document.getElementById("englishInput").value.trim();
-  if (!filipino || !english) return;
+  const form = document.getElementById("formSection");
+
+  if (!filipino || !english) {
+    showToast("⚠️ Please fill in both fields.");
+    return;
+  }
+
+  const exists = words.some(word =>
+    word.filipino.toLowerCase() === filipino.toLowerCase() &&
+    word.english.toLowerCase() === english.toLowerCase()
+  );
+
+  if (exists) {
+    showToast("⚠️ This word already exists in the list!");
+    form.style.display = "none";
+    return;
+  }
 
   userWords.push({ filipino, english });
   saveUserWords();
   refreshWords();
+  showWord(words.length - 1);
   document.getElementById("filipinoInput").value = "";
   document.getElementById("englishInput").value = "";
-  document.getElementById("formSection").style.display = "none";
-  showWord(words.length - 1);
+  form.style.display = "none";
+  showToast(`✅ "${filipino}" added successfully!`);
 }
 
 function addToFavourites() {
   const current = words[currentIndex];
-  const exists = favouriteWords.some(w => w.filipino === current.filipino && w.english === current.english);
-  if (!exists) {
-    favouriteWords.push(current);
-    saveFavourites();
-    alert("Added to favourites!");
-  } else {
-    alert("Already in favourites.");
+  const exists = favouriteWords.some(w =>
+    w.filipino.toLowerCase() === current.filipino.toLowerCase() &&
+    w.english.toLowerCase() === current.english.toLowerCase()
+  );
+
+  if (exists) {
+    showToast("⚠️ This word is already in your favourites.");
+    return;
   }
+
+  favouriteWords.push(current);
+  saveFavourites();
+  showToast(`⭐ "${current.filipino}" added to favourites!`);
 }
 
 function updateFavouriteButtonVisibility() {
@@ -238,6 +260,15 @@ function shuffle(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
 }
 
 // Initial render
