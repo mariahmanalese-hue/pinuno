@@ -2,10 +2,29 @@ const defaultWords = [
   { filipino: "Kamusta ka?", english: "How are you?" },
   { filipino: "Paalam", english: "Good bye" },
   { filipino: "Inom", english: "Drink" },
-  { filipino: "Kain", english: "Eat" }
+  { filipino: "Kain", english: "Eat" },
+  { filipino: "Tae", english: "Poop" },
+  { filipino: "Tayo", english: "Stand" },
+  { filipino: "Upo", english: "Sit" },
+  { filipino: "Upuan", english: "Seat" },
+  { filipino: "Kamot", english: "Scratch" },
+  { filipino: "Palo", english: "Smack" },
+  { filipino: "Ngipin", english: "Teeth" },
+  { filipino: "Tainga (Tenga)", english: "Ear" },
+  { filipino: "Mata", english: "Eyes" },
+  { filipino: "Ilong", english: "Nose" },
+  { filipino: "Pisngi", english: "Cheeks" },
+  { filipino: "Labi", english: "Lips" },
+  { filipino: "Kilay", english: "Eyebrows" },
+  { filipino: "Pilik-mata", english: "Eyelashes" },
+  { filipino: "Makikiraan (po)/Tabi-tabi (po)", english: "Excuse me" },
+  { filipino: "Paa", english: "Feet" },
+  { filipino: "Malayo", english: "Far" },
+  { filipino: "Malapit", english: "Near" }
 ];
 
 let userWords = JSON.parse(localStorage.getItem("userWords")) || [];
+let favouriteWords = JSON.parse(localStorage.getItem("favouriteWords")) || [];
 let incorrectWords = [];
 let words = [...defaultWords, ...userWords];
 let currentIndex = 0;
@@ -15,6 +34,11 @@ let isFlipped = false;
 
 function saveUserWords() {
   localStorage.setItem("userWords", JSON.stringify(userWords));
+}
+
+function saveFavourites() {
+  localStorage.setItem("favouriteWords", JSON.stringify(favouriteWords));
+  updateFavouriteButtonVisibility();
 }
 
 function refreshWords() {
@@ -65,6 +89,51 @@ function addWord() {
   document.getElementById("englishInput").value = "";
   document.getElementById("formSection").style.display = "none";
   showWord(words.length - 1);
+}
+
+function addToFavourites() {
+  const current = words[currentIndex];
+  const exists = favouriteWords.some(w => w.filipino === current.filipino && w.english === current.english);
+  if (!exists) {
+    favouriteWords.push(current);
+    saveFavourites();
+    alert("Added to favourites!");
+  } else {
+    alert("Already in favourites.");
+  }
+}
+
+function updateFavouriteButtonVisibility() {
+  const toggleBtn = document.getElementById("toggleFavouritesBtn");
+  toggleBtn.style.display = favouriteWords.length > 0 ? "inline-block" : "none";
+}
+
+function toggleFavourites() {
+  const section = document.getElementById("favouriteSection");
+  const list = document.getElementById("favouriteList");
+
+  if (section.style.display === "none") {
+    section.style.display = "block";
+    list.innerHTML = "";
+
+    favouriteWords.forEach((word, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${word.filipino} – ${word.english}`;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "🗑️";
+      removeBtn.onclick = () => {
+        favouriteWords.splice(index, 1);
+        saveFavourites();
+        toggleFavourites(); // refresh list
+      };
+
+      li.appendChild(removeBtn);
+      list.appendChild(li);
+    });
+  } else {
+    section.style.display = "none";
+  }
 }
 
 function startQuiz() {
@@ -173,3 +242,4 @@ function shuffle(array) {
 
 // Initial render
 refreshWords();
+updateFavouriteButtonVisibility();

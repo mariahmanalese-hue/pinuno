@@ -14,6 +14,16 @@
       <p id="cardText">Tap a button to begin</p>
     </div>
 
+<div class="favourite-controls">
+  <button onclick="addToFavourites()">⭐ Add to Favourite</button>
+  <button id="toggleFavouritesBtn" onclick="toggleFavourites()" style="display: none;">📁 Favourite Words</button>
+</div>
+
+<div id="favouriteSection" style="display: none;">
+  <h3>⭐ Favourite Words</h3>
+  <ul id="favouriteList"></ul>
+</div>
+
     <div class="controls">
       <button onclick="showPreviousWord()">⏮️ Previous</button>
       <button onclick="showRandomWord()">🎲 Random</button>
@@ -45,6 +55,12 @@
       <h3>Review Incorrect Answers</h3>
       <ul id="mistakeList"></ul>
     </div>
+
+    <div id="favouriteSection" style="display: none;">
+      <h3>⭐ Favourite Words</h3>
+      <ul id="favouriteList"></ul>
+    </div>
+
   </div>
 
   <script src="script.js"></script>

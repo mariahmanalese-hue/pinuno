@@ -34,7 +34,8 @@ h1 {
   transform: scale(1.02);
 }
 
-.controls button {
+.controls button,
+.favourite-controls button {
   margin: 5px;
 }
 
@@ -60,7 +61,9 @@ input {
   width: 45%;
 }
 
-#quizSection, #mistakeReviewSection {
+#quizSection,
+#mistakeReviewSection,
+#favouriteSection {
   background-color: #f0d9f5;
   padding: 15px;
   border-radius: 10px;
@@ -82,14 +85,16 @@ input {
   background-color: #b48cc4;
 }
 
-#mistakeList {
+ul {
   list-style: none;
   padding: 0;
 }
 
-#mistakeList li {
+li {
   background-color: #e6d0f2;
   margin: 5px 0;
   padding: 8px;
   border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
 }
