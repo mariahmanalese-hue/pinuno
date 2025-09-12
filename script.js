@@ -427,7 +427,12 @@ const runSearch = async () => {
   if (matches.length > 0) {
     renderSuggestions(matches, suggestionsEl, false);
     return;
-  }
+  } else {
+  const li = document.createElement("li");
+  li.className = "no-results";
+  li.textContent = `No matches found for "${query}"`;
+  suggestionsEl.appendChild(li);
+}
 
   const apiMatches = await fetchExternalSuggestions(query);
   if (apiMatches.length > 0) {
@@ -618,3 +623,4 @@ window.addEventListener("DOMContentLoaded", () => {
   const confirmAddBtn = document.getElementById("confirmAddFromSearchBtn");
   if (confirmAddBtn) confirmAddBtn.onclick = confirmAddFromSearch;
 });
+
