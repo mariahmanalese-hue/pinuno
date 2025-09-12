@@ -10,62 +10,158 @@
   <div class="container">
     <h1>🌸 Pinuno</h1>
 
+    <!-- Search Bar -->
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="🔍 Search Filipino or English..." autocomplete="off" />
+      <ul id="searchSuggestions"></ul>
+    </div>
+
+    <!-- Flashcard -->
     <div class="flashcard" id="flashcard" onclick="flipCard()">
-      <p id="cardText">Tap a button to begin</p>
+      <button id="deleteWordBtn" class="delete-word-btn" onclick="event.stopPropagation(); confirmDeleteCurrentWord()" style="display:none;">❌</button>
+      <div class="flashcard-inner">
+        <div class="flashcard-front">
+          <p id="cardFront">Tap a button to begin</p>
+        </div>
+        <div class="flashcard-back">
+          <p id="cardBack"></p>
+        </div>
+      </div>
     </div>
 
-<div class="favourite-controls">
-  <button onclick="addToFavourites()">⭐ Add to Favourite</button>
-  <button id="toggleFavouritesBtn" onclick="toggleFavourites()" style="display: none;">📁 Favourite Words</button>
-</div>
-
-<div id="favouriteSection" style="display: none;">
-  <h3>⭐ Favourite Words</h3>
-  <ul id="favouriteList"></ul>
-</div>
-
-    <div class="controls">
-      <button onclick="showPreviousWord()">⏮️ Previous</button>
-      <button onclick="showRandomWord()">🎲 Random</button>
-      <button onclick="showNextWord()">⏭️ Next</button>
+    <!-- Navigation -->
+    <div class="button-group nav-pair">
+      <button class="btn btn-secondary" onclick="showPreviousWord()">⏮️ Previous</button>
+      <button class="btn btn-secondary" onclick="showNextWord()">⏭️ Next</button>
+    </div>
+    <div class="button-group">
+      <button class="btn btn-secondary" onclick="showRandomWord()">🎲 Random</button>
     </div>
 
-    <button onclick="toggleForm()">➕ Add Word</button>
-
-<div class="form" id="formSection" style="display: none;">
-  <button class="close-btn" onclick="toggleForm()">❌</button>
-  <input type="text" id="filipinoInput" placeholder="Filipino word" />
-  <input type="text" id="englishInput" placeholder="English translation" />
-  <button onclick="addWord()">✅ Save</button>
-</div>
-
-    <button onclick="startQuiz()">📝 Start Quiz</button>
-    <button id="reviewMistakesBtn" onclick="showIncorrectWords()" style="display: none;">📚 Review Mistakes</button>
-
-    <div id="quizSection" style="display: none;">
-      <h2>📝 Quiz Mode</h2>
-      <p id="quizQuestion"></p>
-      <div id="quizOptions"></div>
-      <p id="quizFeedback"></p>
-      <button onclick="nextQuizQuestion()">Next</button>
-      <button onclick="endQuiz()">❌ End Quiz</button>
-      <button id="restartQuizBtn" onclick="restartQuiz()" style="display: none;">🔁 Restart Quiz</button>
+    <!-- Word Actions -->
+    <div class="button-group">
+      <button class="btn btn-secondary" onclick="addToFavourites()">⭐ Add to Favourite</button>
+      <button class="btn btn-secondary" id="toggleFavouritesBtn" onclick="toggleFavourites()">📁 Favourite Words</button>
+      <button class="btn btn-secondary" onclick="openAddWord()">➕ Add Word</button>
     </div>
 
-    <div id="mistakeReviewSection" style="display: none;">
-      <h3>Review Incorrect Answers</h3>
-      <ul id="mistakeList"></ul>
+    <!-- Learning Tools -->
+    <div class="button-group">
+      <button class="btn btn-primary" onclick="startQuiz()">📝 Start Quiz</button>
+      <button class="btn btn-secondary" onclick="openAllWords()">📖 Show All Words</button>
     </div>
-
-    <div id="favouriteSection" style="display: none;">
-      <h3>⭐ Favourite Words</h3>
-      <ul id="favouriteList"></ul>
-    </div>
-
   </div>
 
-  <script src="script.js"></script>
+  <!-- Add Word Modal -->
+  <div id="addWordModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        ➕ Add Word
+        <button class="modal-close-btn" onclick="closeAddWord()">✖</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <input type="text" id="filipinoInput" placeholder="Filipino word" />
+        </div>
+        <div class="form-field">
+          <input type="text" id="englishInput" placeholder="English translation" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="addWord()">✅ Save</button>
+        <button class="btn btn-secondary" onclick="closeAddWord()">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Words Modal -->
+  <div id="allWordsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        📖 All Words
+        <button class="modal-close-btn" onclick="closeAllWords()">✖</button>
+      </div>
+      <div class="modal-body">
+        <ul id="allWordsList"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAllWords()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Favourite Words Modal -->
+  <div id="favouriteModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        ⭐ Favourite Words
+        <button class="modal-close-btn" onclick="closeFavourites()">✖</button>
+      </div>
+      <div class="modal-body">
+        <ul id="favouriteList"></ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFavourites()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        Confirm Deletion
+        <button class="modal-close-btn" onclick="closeDeleteModal()">✖</button>
+      </div>
+      <div class="modal-body">
+        <p id="deleteMessage">Are you sure you want to delete this word?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="confirmDeleteBtn">✅ Yes</button>
+        <button class="btn btn-secondary" id="cancelDeleteBtn">❌ No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add from Search Confirmation Modal -->
+  <div id="addFromSearchModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        Add Word
+        <button class="modal-close-btn" onclick="closeAddFromSearchModal()">✖</button>
+      </div>
+      <div class="modal-body">
+        <p id="addFromSearchMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="confirmAddFromSearchBtn">✅ Yes</button>
+        <button class="btn btn-secondary" onclick="closeAddFromSearchModal()">❌ No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Modal -->
+  <div id="quizModal" class="modal-overlay" style="display:none;">
+    <div class="modal-window quiz-window">
+      <div class="modal-header">
+        📝 Quiz Mode
+        <button class="modal-close-btn" onclick="stopQuiz()">✖</button>
+      </div>
+      <div class="modal-body">
+        <p id="quizQuestion"></p>
+        <div id="quizOptions"></div>
+        <p id="quizFeedback"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="nextQuizBtn" onclick="nextQuizQuestion()">Next</button>
+        <button class="btn btn-secondary" id="stopQuizBtn" onclick="stopQuiz()">⏹ Stop Quiz</button>
+        <button class="btn btn-primary" id="restartQuizBtn" onclick="restartQuiz()" style="display: none;">🔁 Restart Quiz</button>
+        <button class="btn btn-secondary" id="reviewMistakesBtn" onclick="showIncorrectWords()" style="display: none;">📚 Review Mistakes</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
+  <script src="script.js"></script>
 </body>
 </html>
