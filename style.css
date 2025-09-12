@@ -53,6 +53,15 @@ h1 {
   font-family: 'Press Start 2P', cursive;
   font-size: 0.7em;
 }
+
+.no-results {
+  color: #888;
+  font-style: italic;
+  padding: 0.5em;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
 #searchSuggestions {
   list-style: none;
   padding: 0;
@@ -375,3 +384,4 @@ input {
   #allWordsList, #favouriteList { max-height: 180px; }
   .modal-window { width: 90%; }
 }
+
