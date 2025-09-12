@@ -76,8 +76,16 @@ function highlightMatch(text, query) {
 
 async function translateText(userInput) {
   try {
-  const response = await fetch("https://pinuno-translate-proxy.onrender.com/translate", {
-
+    const response = await fetch("https://pinuno-translate-proxy.onrender.com/translate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        q: userInput,
+        source: "auto",
+        target: "en"
+      })
     });
 
     const data = await response.json();
@@ -211,4 +219,3 @@ window.addEventListener("DOMContentLoaded", () => {
   const confirmAddBtn = document.getElementById("confirmAddFromSearchBtn");
   if (confirmAddBtn) confirmAddBtn.onclick = confirmAddFromSearch;
 });
-
