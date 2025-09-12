@@ -424,25 +424,22 @@ const runSearch = async () => {
     w.english.toLowerCase().includes(qLower)
   );
 
-  if (matches.length > 0) {
-    renderSuggestions(matches, suggestionsEl, false);
-    return;
-  } else {
+if (matches.length > 0) {
+  renderSuggestions(matches, suggestionsEl, false);
+  return;
+}
+
+const apiMatches = await fetchExternalSuggestions(query);
+
+if (apiMatches.length > 0) {
+  renderSuggestions(apiMatches, suggestionsEl, true);
+} else {
   const li = document.createElement("li");
   li.className = "no-results";
   li.textContent = `No matches found for "${query}"`;
   suggestionsEl.appendChild(li);
 }
 
-  const apiMatches = await fetchExternalSuggestions(query);
-  if (apiMatches.length > 0) {
-    renderSuggestions(apiMatches, suggestionsEl, true);
-  } else {
-    const li = document.createElement("li");
-    li.textContent = "No matches found";
-    suggestionsEl.appendChild(li);
-  }
-};
 const searchWords = debounce(runSearch, 120);
 
 function renderSuggestions(list, container, isExternal) {
@@ -623,4 +620,5 @@ window.addEventListener("DOMContentLoaded", () => {
   const confirmAddBtn = document.getElementById("confirmAddFromSearchBtn");
   if (confirmAddBtn) confirmAddBtn.onclick = confirmAddFromSearch;
 });
+
 
