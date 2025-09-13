@@ -370,7 +370,7 @@ const debounce = (fn, delay = 150) => {
 async function fetchExternalSuggestions(query) {
   try {
     const response = await fetch(
-      `https://pinuno-translate-proxy.onrender.com`,
+      "https://pinuno-translate-proxy.onrender.com/translate", // your Render backend URL
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -388,9 +388,9 @@ async function fetchExternalSuggestions(query) {
     }
 
     const data = await response.json();
+    console.log("API raw response:", data); // Debugging
 
-    // If your backend returns { translatedText: "..." }
-    // wrap it in an array so renderSuggestions() can handle it
+    // If backend returns { translatedText: "..." }
     if (data.translatedText) {
       return [
         {
@@ -400,13 +400,21 @@ async function fetchExternalSuggestions(query) {
       ];
     }
 
-    // If backend returns an array of suggestions, just return it
-    return Array.isArray(data) ? data : [];
+    // If backend returns an array of suggestions
+    if (Array.isArray(data)) {
+      return data.map(item => ({
+        filipino: item.filipino || "",
+        english: item.english || ""
+      }));
+    }
+
+    return [];
   } catch (err) {
     console.error("Error fetching external suggestions:", err);
     return [];
   }
 }
+
 
 
 const runSearch = async () => {

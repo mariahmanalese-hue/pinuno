@@ -317,11 +317,23 @@ input {
 }
 .modal-footer {
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-  background-color: var(--pink-2);
-  border-top: 2px solid var(--pink-1);
+  flex-wrap: wrap;         /* allow wrapping on smaller screens */
+  gap: 0.5rem;              /* space between buttons */
+  justify-content: center;  /* center them horizontally */
+  margin-top: 1rem;         /* space above buttons */
+  background-color: #f9c5d1; /* pastel pink */
+  border: 2px solid var(--pink-1);
+  font-family: 'Press Start 2P', monospace;
+}
+
+.modal-footer .btn {
+  flex: 1 1 auto;           /* buttons grow/shrink evenly */
+  min-width: 120px;         /* prevents them from getting too small */
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  text-align: center;
+  background-color: #f7a8b8;
+  border: 2px solid var(--pink-1);
 }
 
 /* Favourite list inside modal */
