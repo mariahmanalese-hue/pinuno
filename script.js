@@ -5,7 +5,7 @@ const defaultWords = [
   { filipino: "Inom", english: "Drink" },
   { filipino: "Kain", english: "Eat" },
   { filipino: "Tae", english: "Poop" },
-  { filipino: "Tayo", english: "Stand" },
+  { filipino: "Tayo", english: "Stand/Together" },
   { filipino: "Upo", english: "Sit" },
   { filipino: "Upuan", english: "Seat" },
   { filipino: "Kamot", english: "Scratch" },
@@ -21,7 +21,13 @@ const defaultWords = [
   { filipino: "Makikiraan (po)/Tabi-tabi (po)", english: "Excuse me" },
   { filipino: "Paa", english: "Feet" },
   { filipino: "Malayo", english: "Far" },
-  { filipino: "Malapit", english: "Near" }
+  { filipino: "Malapit", english: "Near" },
+   { filipino: "Kamay", english: "Hand" },
+  { filipino: "Kuko", english: "Nail" },
+   { filipino: "Sing-sing", english: "Ring" },
+  { filipino: "Alahas", english: "Jewelry" },
+ { filipino: "Hikaw", english: "Earrings" },
+  { filipino: "Kwintas", english: "Necklace" }
 ];
 
 let userWords = JSON.parse(localStorage.getItem("userWords")) || [];
@@ -41,6 +47,21 @@ async function translateText(q) {
   });
   return res.json();
 }
+
+let uiCooldownUntil = 0;
+
+function withUICooldown(ms = 300) {
+  uiCooldownUntil = Date.now() + ms;
+}
+
+// Block clicks during cooldown (capture phase)
+document.addEventListener("click", (e) => {
+  if (Date.now() < uiCooldownUntil) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+}, true);
+
 
 // Quiz state
 let quizIndex = 0;
@@ -170,6 +191,8 @@ function closeDeleteModal() {
 }
 
 // ====== FAVOURITES ======
+
+// Add current word to favourites
 function addToFavourites() {
   const current = words[currentIndex];
   const exists = favouriteWords.some(w =>
@@ -183,22 +206,62 @@ function addToFavourites() {
   saveFavourites();
   showToast(`⭐ "${current.filipino}" added to favourites!`);
 }
+
+// Show/hide the Favourite Words button if needed
 function updateFavouriteButtonVisibility() {
-  document.getElementById("toggleFavouritesBtn").style.display = "inline-block";
-}
-function toggleFavourites() {
-  favouriteWords = JSON.parse(localStorage.getItem("favouriteWords")) || [];
-  renderFavouriteList(document.getElementById("favouriteList"));
-  if (favouriteWords.length > 0) {
-    document.getElementById("favouriteModal").style.display = "flex";
-  } else {
-    showToast("⭐ You have no favourite words yet!");
-  }
-}
-function closeFavourites() {
-  document.getElementById("favouriteModal").style.display = "none";
+  const btn = document.getElementById("toggleFavBtn"); // fixed ID
+  if (btn) btn.style.display = "inline-block";
 }
 
+// Open the favourites modal and populate the list
+function toggleFavourites() {
+  const favListEl = document.getElementById("favouriteList");
+  if (!favListEl) return; // safety check
+
+  favouriteWords = JSON.parse(localStorage.getItem("favouriteWords")) || [];
+
+  // Clear the list
+  favListEl.innerHTML = "";
+
+  if (favouriteWords.length > 0) {
+    // Populate the list
+    favouriteWords.forEach((word, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${word.filipino} — ${word.english}`;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "🗑️";
+      removeBtn.className = "inline-delete-btn";
+      removeBtn.onclick = () => {
+        deleteIndex = index;
+        document.getElementById("deleteMessage").textContent =
+          `Delete "${word.filipino}" from favourites?`;
+        document.getElementById("deleteModal").style.display = "flex";
+        document.getElementById("confirmDeleteBtn").onclick = () => {
+          favouriteWords.splice(deleteIndex, 1);
+          saveFavourites();
+          renderFavouriteList(favListEl);
+          closeDeleteModal();
+          showToast("🗑️ Removed from favourites.");
+        };
+      };
+
+      li.appendChild(removeBtn);
+      favListEl.appendChild(li);
+    });
+  } else {
+    // Show a friendly empty state
+    const li = document.createElement("li");
+    li.textContent = "⭐ You have no favourite words yet!";
+    li.style.fontStyle = "italic";
+    favListEl.appendChild(li);
+  }
+
+  // Always open the modal
+  document.getElementById("favouriteModal").style.display = "flex";
+}
+
+// Render favourites list (used after deletion)
 function renderFavouriteList(listEl) {
   listEl.innerHTML = "";
   if (favouriteWords.length === 0) return;
@@ -229,14 +292,27 @@ function renderFavouriteList(listEl) {
   });
 }
 
-
 // ====== QUIZ ======
-function startQuiz() {
+let quizWords = [];
+
+function startQuiz(source = "all") {
   refreshWords();
-  if (words.length < 4) {
+
+  // Decide which list to use
+  if (source === "favourites") {
+    quizWords = [...favouriteWords];
+  } else {
+    quizWords = [...words];
+  }
+
+  if (quizWords.length < 4) {
     showToast("⚠️ Add at least 4 words to start the quiz.");
     return;
   }
+
+  // Shuffle the quiz words for random order
+  quizWords = shuffle(quizWords);
+
   quizIndex = 0;
   score = 0;
   incorrectWords = [];
@@ -255,21 +331,25 @@ function startQuiz() {
 }
 
 function nextQuizQuestion() {
-  if (quizIndex >= words.length) {
+  if (quizIndex >= quizWords.length) {
     endQuiz(false);
     return;
   }
 
   quizAnswered = false;
-  const current = words[quizIndex];
+  const current = quizWords[quizIndex];
   const correct = current.english;
 
-  let options = words.filter((_, i) => i !== quizIndex).map(w => w.english);
+  let options = quizWords
+    .filter((_, i) => i !== quizIndex)
+    .map(w => w.english);
+
   options = shuffle(options).slice(0, 3);
   options.push(correct);
   options = shuffle(options);
 
-  document.getElementById("quizQuestion").textContent = `What does "${current.filipino}" mean?`;
+  document.getElementById("quizQuestion").textContent =
+    `What does "${current.filipino}" mean?`;
   document.getElementById("quizFeedback").textContent = "";
 
   const container = document.getElementById("quizOptions");
@@ -289,7 +369,8 @@ function nextQuizQuestion() {
         document.getElementById("quizFeedback").textContent = "✅ Correct!";
       } else {
         btn.classList.add("wrong");
-        document.getElementById("quizFeedback").textContent = `❌ Wrong. Correct answer: ${correct}`;
+        document.getElementById("quizFeedback").textContent =
+          `❌ Wrong. Correct answer: ${correct}`;
         incorrectWords.push(current);
       }
 
@@ -304,9 +385,12 @@ function nextQuizQuestion() {
 function endQuiz(stoppedEarly) {
   document.getElementById("nextQuizBtn").style.display = "none";
   document.getElementById("quizOptions").innerHTML = "";
-  document.getElementById("quizQuestion").textContent = stoppedEarly ? "Quiz stopped early." : "Quiz complete!";
-  document.getElementById("quizFeedback").textContent = `Your score: ${score}/${quizIndex}`;
-  document.getElementById("reviewMistakesBtn").style.display = incorrectWords.length > 0 ? "inline-block" : "none";
+  document.getElementById("quizQuestion").textContent =
+    stoppedEarly ? "Quiz stopped early." : "Quiz complete!";
+  document.getElementById("quizFeedback").textContent =
+    `Your score: ${score}/${quizIndex}`;
+  document.getElementById("reviewMistakesBtn").style.display =
+    incorrectWords.length > 0 ? "inline-block" : "none";
   document.getElementById("restartQuizBtn").style.display = "inline-block";
 }
 
@@ -340,6 +424,8 @@ function restartQuiz() {
   nextQuizQuestion();
 }
 
+
+
 function showIncorrectWords() {
   const container = document.getElementById("quizOptions");
   document.getElementById("quizQuestion").textContent = "Your mistakes to review:";
@@ -369,53 +455,83 @@ const debounce = (fn, delay = 150) => {
 // Fetch suggestions from backend when no local matches are found
 async function fetchExternalSuggestions(query) {
   try {
+    const lang = detectLanguage(query);
+
+    if (!lang) {
+      showToast("⚠️ Please enter only Filipino or English words.");
+      return [];
+    }
+
+    // Map 'fil' to 'tl' for LibreTranslate
+    const sourceLang = lang === "fil" ? "tl" : "en";
+    const targetLang = lang === "en" ? "tl" : "en";
+
     const response = await fetch(
-      "https://pinuno-translate-proxy.onrender.com/translate", // your Render backend URL
+      "https://pinuno-translate-proxy.onrender.com/translate",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           q: query,
-          source: "auto",
-          target: "en"
+          source: sourceLang,
+          target: targetLang
         })
       }
     );
 
     if (!response.ok) {
       console.error("Backend error:", await response.text());
+      showToast("⚠️ Translation service error.");
       return [];
     }
 
     const data = await response.json();
-    console.log("API raw response:", data); // Debugging
+    console.log("API raw response:", data);
 
-    // If backend returns { translatedText: "..." }
-    if (data.translatedText) {
-      return [
-        {
-          filipino: query,
-          english: data.translatedText
-        }
-      ];
+    // Check if translation is missing or identical to input
+    if (
+      !data.translatedText ||
+      data.translatedText.trim() === "" ||
+      data.translatedText.trim().toLowerCase() === query.trim().toLowerCase()
+    ) {
+      showToast(`⚠️ Could not translate "${query}" to English.`);
+      return [];
     }
 
-    // If backend returns an array of suggestions
-    if (Array.isArray(data)) {
-      return data.map(item => ({
-        filipino: item.filipino || "",
-        english: item.english || ""
-      }));
-    }
+    // Return in your expected format
+    return [
+      {
+        filipino: lang === "fil" ? capitaliseIfSingleWord(query) : capitaliseIfSingleWord(data.translatedText),
+        english: lang === "en" ? capitaliseIfSingleWord(query) : capitaliseIfSingleWord(data.translatedText)
+      }
+    ];
 
-    return [];
   } catch (err) {
     console.error("Error fetching external suggestions:", err);
+    showToast("⚠️ Could not connect to translation service.");
     return [];
   }
 }
 
 
+
+
+function detectLanguage(text) {
+  const filipinoPattern = /[ÁÉÍÓÚÑáéíóúñ]/;
+  const englishPattern = /^[A-Za-z\s-]+$/;
+
+  const trimmed = text.trim();
+
+  if (filipinoPattern.test(trimmed)) {
+    return "fil"; // We'll map this to 'tl' later
+  }
+
+  if (englishPattern.test(trimmed)) {
+    return "en";
+  }
+
+  return null;
+}
 
 const runSearch = async () => {
   refreshWords();
@@ -425,53 +541,186 @@ const runSearch = async () => {
   const qLower = query.toLowerCase();
 
   suggestionsEl.innerHTML = "";
-  if (!query) return;
 
-  const matches = words.filter(w =>
-    w.filipino.toLowerCase().includes(qLower) ||
-    w.english.toLowerCase().includes(qLower)
+  if (query.length < 3) return;
+
+  if (!detectLanguage(query)) {
+    const li = document.createElement("li");
+    li.textContent = "⚠ Please enter only Filipino or English words.";
+    suggestionsEl.appendChild(li);
+    return;
+  }
+
+  // Local matches — startsWith first
+  let matches = words.filter(w =>
+    w.filipino.toLowerCase().startsWith(qLower) ||
+    w.english.toLowerCase().startsWith(qLower)
   );
+
+  if (matches.length === 0) {
+    matches = words.filter(w =>
+      w.filipino.toLowerCase().includes(qLower) ||
+      w.english.toLowerCase().includes(qLower)
+    );
+  }
 
   if (matches.length > 0) {
     renderSuggestions(matches, suggestionsEl, false);
     return;
   }
 
+  // API matches
   const apiMatches = await fetchExternalSuggestions(query);
   if (apiMatches.length > 0) {
     renderSuggestions(apiMatches, suggestionsEl, true);
-  } else {
-    const li = document.createElement("li");
-    li.textContent = "No matches found";
-    suggestionsEl.appendChild(li);
+    return;
   }
-};
-const searchWords = debounce(runSearch, 120);
 
-function renderSuggestions(list, container, isExternal) {
+  // No matches — show Google Translate button
+  const li = document.createElement("li");
+  li.textContent = "No matches found";
+
+  const gBtn = document.createElement("button");
+  gBtn.textContent = "🌐 Translate in Google";
+  gBtn.classList.add("btn", "btn-secondary");
+  gBtn.addEventListener("click", () => {
+    localStorage.setItem("lastGoogleTranslateQuery", query.trim());
+    const url = `https://translate.google.com/?sl=auto&tl=en&text=${encodeURIComponent(query)}&op=translate`;
+    window.open(url, "_blank");
+  });
+
+  li.appendChild(document.createElement("br"));
+  li.appendChild(gBtn);
+  suggestionsEl.appendChild(li);
+};
+
+const searchWords = debounce(runSearch, 350);
+
+function showManualAddPrompt(word) {
+  const formattedWord = capitaliseIfSingleWord(word);
+  document.getElementById("manualAddWord").textContent = formattedWord;
+  document.getElementById("manualAddPrompt").style.display = "flex";
+
+  document.getElementById("manualAddYes").onclick = () => {
+    document.getElementById("manualAddPrompt").style.display = "none";
+    openAddWord();
+
+    const lang = detectLanguage(word);
+    if (lang === "fil") {
+      const filipinoInput = document.getElementById("filipinoWordInput");
+      if (filipinoInput) filipinoInput.value = capitaliseIfSingleWord(formattedWord);
+    } else if (lang === "en") {
+      const englishInput = document.getElementById("englishWordInput");
+      if (englishInput) englishInput.value = capitaliseIfSingleWord(formattedWord);
+    } else {
+      const filipinoInput = document.getElementById("filipinoWordInput");
+      if (filipinoInput) filipinoInput.value = capitaliseIfSingleWord(formattedWord);
+    }
+  };
+
+  document.getElementById("manualAddNo").onclick = () => {
+    document.getElementById("manualAddPrompt").style.display = "none";
+  };
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    const lastQuery = localStorage.getItem("lastGoogleTranslateQuery");
+    if (lastQuery) {
+      showManualAddPrompt(lastQuery);
+      localStorage.removeItem("lastGoogleTranslateQuery");
+    }
+  }
+});
+
+// Detect when user comes back to the tab
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    const lastQuery = localStorage.getItem("lastGoogleTranslateQuery");
+    if (lastQuery) {
+      showManualAddPrompt(lastQuery);
+      localStorage.removeItem("lastGoogleTranslateQuery");
+    }
+  }
+});
+
+// Capitalise first letter if single word
+function capitaliseIfSingleWord(text) {
+  if (!text) return "";
+  const trimmed = text.trim();
+  if (trimmed.includes(" ")) return trimmed; // phrase/sentence — leave as-is
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function showAddedPopup(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) {
+    console.warn("Toast element not found in DOM");
+    return;
+  }
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2000);
+}
+
+
+function addWordToList(filipino, english) {
+  // Check if it already exists
+  const exists = words.some(w =>
+    w.filipino.toLowerCase() === filipino.toLowerCase() &&
+    w.english.toLowerCase() === english.toLowerCase()
+  );
+
+  if (exists) {
+    showToast(`⚠️ "${filipino}" is already in your list`);
+    return;
+  }
+
+  // ✅ Add to userWords (not words directly)
+  userWords.push({ filipino, english });
+
+  // Save and refresh
+  saveUserWords();
+  refreshWords();
+
+  // Highlight the newly added word
+  showWord(words.length - 1);
+
+  // Show toast (same style as Add Word modal)
+  showToast(`✅ "${filipino}" added!`);
+}
+
+
+function renderSuggestions(suggestions, container, isFromAPI) {
   container.innerHTML = "";
-  const q = (document.getElementById("searchInput").value || "").trim();
-  list.forEach(match => {
+
+  suggestions.forEach(suggestion => {
     const li = document.createElement("li");
-    li.innerHTML = highlightMatch(`${match.filipino} — ${match.english}`, q);
-    li.onclick = () => {
-      if (!isExternal) {
-        currentIndex = words.findIndex(w =>
-          w.filipino === match.filipino && w.english === match.english
-        );
-        showWord(currentIndex);
-        container.innerHTML = "";
-        document.getElementById("searchInput").value = "";
-      } else {
-        addFromSearchWord = match;
-        document.getElementById("addFromSearchMessage").textContent =
-          `Add "${match.filipino} — ${match.english}" to your words?`;
-        document.getElementById("addFromSearchModal").style.display = "flex";
-      }
-    };
+
+    const filipinoWord = capitaliseIfSingleWord(suggestion.filipino);
+    const englishWord = capitaliseIfSingleWord(suggestion.english);
+
+    const textSpan = document.createElement("span");
+    textSpan.textContent = `${filipinoWord} — ${englishWord}`;
+    li.appendChild(textSpan);
+
+    const alreadyInList = words.some(
+      w => w.filipino === filipinoWord && w.english === englishWord
+    );
+
+    if (!alreadyInList) {
+      const addBtn = document.createElement("button");
+      addBtn.innerHTML = "➕";
+      addBtn.classList.add("add-word-btn", "icon-btn");
+      addBtn.title = "Add to My List";
+      addBtn.onclick = () => addWordToList(filipinoWord, englishWord);
+      li.appendChild(addBtn);
+    }
+
     container.appendChild(li);
   });
 }
+
 
 function highlightMatch(text, query) {
   if (!query) return text;
@@ -602,27 +851,150 @@ function shuffle(array) {
   }
   return array;
 }
+// ====== Modal helpers ======
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "flex";
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "none";
+}
+
+// ====== Specific modal actions ======
+function closeFavourites() {
+  closeModal("favouriteModal");
+}
+function closeAllWords() {
+  closeModal("allWordsModal");
+}
+function closeAddWord() {
+  closeModal("addWordModal");
+}
+function closeDeleteModal() {
+  closeModal("deleteModal");
+}
+function closeAddFromSearchModal() {
+  closeModal("addFromSearchModal");
+}
 
 // ====== INIT ======
-window.addEventListener("DOMContentLoaded", () => {
-  refreshWords();
-  updateFavouriteButtonVisibility();
-  showWord(0);
+document.addEventListener("DOMContentLoaded", () => {
+  const bind = (id, event, handler) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener(event, handler);
+  };
+
+document.addEventListener("DOMContentLoaded", () => {
+  const filipinoInput = document.getElementById("filipinoWordInput");
+  const englishInput = document.getElementById("englishWordInput");
+
+  [filipinoInput, englishInput].forEach(input => {
+    if (input) {
+      input.addEventListener("input", () => {
+        const cursorPos = input.selectionStart;
+        input.value = capitaliseIfSingleWord(input.value);
+        input.setSelectionRange(cursorPos, cursorPos);
+      });
+    }
+  });
+});
+
+
+  // Flashcard
+  bind("flashcard", "click", flipCard);
+  bind("deleteWordBtn", "click", e => {
+    e.stopPropagation();
+    confirmDeleteCurrentWord();
+  });
+
+  // Navigation
+  bind("prevWordBtn", "click", showPreviousWord);
+  bind("nextWordBtn", "click", showNextWord);
+  bind("randomWordBtn", "click", showRandomWord);
+
+  // Word actions
+  bind("addToFavBtn", "click", addToFavourites);
+  bind("toggleFavBtn", "click", toggleFavourites);
+  bind("openAddWordBtn", "click", openAddWord);
+
+  // Add Word modal
+  bind("closeAddWordBtn", "click", closeAddWord);
+  bind("saveWordBtn", "click", addWord);
+  bind("cancelAddWordBtn", "click", closeAddWord);
+
+  // All Words modal
+  bind("openAllWordsBtn", "click", openAllWords);
+  bind("closeAllWordsBtn", "click", closeAllWords);
+  bind("closeAllWordsBtn2", "click", closeAllWords);
+
+  // Favourite modal
+  bind("closeFavBtn", "click", closeFavourites);
+  bind("closeFavBtn2", "click", closeFavourites);
+
+  // Delete confirmation modal
+  bind("closeDeleteModalBtn", "click", closeDeleteModal);
+  bind("confirmDeleteBtn", "click", () => {
+    document.getElementById("deleteModal").style.display = "none";
+  });
+  bind("cancelDeleteBtn", "click", closeDeleteModal);
+
+  // SEARCH
+  bind("searchInput", "input", searchWords);
 
   const searchInput = document.getElementById("searchInput");
-  if (searchInput) searchInput.addEventListener("input", searchWords);
+  const suggestionsEl = document.getElementById("searchSuggestions");
+  const closeBtn = document.getElementById("closeSearchBtn");
 
+  // Close button clears and blurs
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      suggestionsEl.innerHTML = "";
+      searchInput.blur();
+    });
+  }
+
+  // Click outside search area clears suggestions
   document.addEventListener("click", (e) => {
-    const sc = document.querySelector(".search-container");
-    if (sc && !sc.contains(e.target)) {
-      const ul = document.getElementById("searchSuggestions");
-      if (ul) ul.innerHTML = "";
+    if (!e.target.closest(".search-container")) {
+      suggestionsEl.innerHTML = "";
+      searchInput.blur();
     }
   });
 
-  const cancelDel = document.getElementById("cancelDeleteBtn");
-  if (cancelDel) cancelDel.onclick = closeDeleteModal;
+  // Add-from-search modal
+  bind("closeAddFromSearchBtn", "click", closeAddFromSearchModal);
+  bind("confirmAddFromSearchBtn", "click", confirmAddFromSearch);
+  bind("cancelAddFromSearchBtn", "click", closeAddFromSearchModal);
 
-  const confirmAddBtn = document.getElementById("confirmAddFromSearchBtn");
-  if (confirmAddBtn) confirmAddBtn.onclick = confirmAddFromSearch;
-});
+  // Quiz Flow
+  bind("startQuizBtn", "click", () => {
+    document.getElementById("quizChoiceModal").style.display = "flex";
+  });
+
+  bind("quizAllBtn", "click", () => {
+    document.getElementById("quizChoiceModal").style.display = "none";
+    startQuiz("all");
+  });
+
+  bind("quizFavBtn", "click", () => {
+    document.getElementById("quizChoiceModal").style.display = "none";
+    startQuiz("favourites");
+  });
+
+  bind("closeQuizBtn", "click", () => {
+    document.getElementById("quizModal").style.display = "none";
+    stopClickedOnce = false;
+  });
+
+  bind("closeQuizChoiceBtn", "click", () => {
+    document.getElementById("quizChoiceModal").style.display = "none";
+  });
+
+  // Quiz controls
+  bind("nextQuizBtn", "click", nextQuizQuestion);
+  bind("stopQuizBtn", "click", stopQuiz);
+  bind("restartQuizBtn", "click", restartQuiz);
+  bind("reviewMistakesBtn", "click", showIncorrectWords);
+}); // ✅ Only one closing brace here

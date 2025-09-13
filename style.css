@@ -46,12 +46,12 @@ h1 {
   margin-bottom: 20px;
 }
 #searchInput {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid var(--pink-1);
-  border-radius: 8px;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.7em;
+  caret-color: var(--pink-1);
+}
+
+#searchInput::selection {
+  background-color: var(--pink-1);
+  color: #fff;
 }
 #searchSuggestions {
   list-style: none;
@@ -74,6 +74,67 @@ h1 {
 #searchSuggestions li:hover {
   background-color: var(--pink-2);
 }
+
+/* Close button styling */
+#closeSearchBtn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--pink-1);
+  padding: 0;
+  line-height: 1;
+}
+
+#closeSearchBtn:hover {
+  color: var(--pink-2);
+}
+
+.google-translate-btn {
+  margin-top: 5px;
+  padding: 4px 8px;
+  font-size: 0.65em;
+  background-color: var(--pink-1);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.google-translate-btn:hover {
+  background-color: var(--pink-2);
+}
+
+
+#manualAddPrompt .modal {
+  background: #fffafc;
+  border: 2px solid var(--pink-1);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7em;
+}
+
+#manualAddPrompt button {
+  margin: 5px;
+  padding: 5px 10px;
+  font-size: 0.7em;
+  background-color: var(--pink-1);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#manualAddPrompt button:hover {
+  background-color: var(--pink-2);
+}
+
 
 /* Flashcard */
 .flashcard {
@@ -123,6 +184,22 @@ h1 {
   z-index: 10;
 }
 .delete-word-btn:hover { color: #ff0000; }
+
+/* Add word button on search */
+.add-word-btn.icon-btn {
+  background: none;
+  border: none;
+  color: #000;
+  font-size: 0.9rem; /* small like delete button */
+  cursor: pointer;
+  margin-left: 0.5rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.add-word-btn.icon-btn:hover {
+  color: #d33; /* or match your hover style */
+}
 
 /* Buttons */
 .button-group {
