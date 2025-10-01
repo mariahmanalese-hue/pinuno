@@ -1,208 +1,440 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#ffb3c6"> <!-- or your var(--pink-1) hex -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pinuno — Filipino ↔ English</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+:root{--pink-1:#ffb6c1;--pink-2:#ffe4f0;--pink-3:#fff0f5;--lavender:#f0d9f5;--text:#5c4b7d}
+*{box-sizing:border-box}
+body{font-family:'Press Start 2P',cursive;background:linear-gradient(to bottom,#fceaff,#e0f7ff);color:var(--text);margin:0;display:flex;justify-content:center}
+.container{max-width:420px;padding:20px;text-align:center;background:var(--pink-3);margin-top:28px;box-shadow:0 0 20px rgba(200,150,255,0.25);border-radius:8px}
+h1{font-size:1.6rem;color:#ff69b4;margin:0 0 12px}
+.form{background:#fffafc;border:4px solid var(--pink-1);padding:12px;border-radius:8px;display:grid;gap:8px}
+input{padding:10px;border:2px solid var(--pink-1);border-radius:6px;font-family:'Press Start 2P',cursive;font-size:0.85rem;background:#fffafc}
+.button-group{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.btn{padding:10px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:bold;font-family:'Press Start 2P',cursive}
+.btn-primary{background:var(--pink-1);color:#fff} .btn-secondary{background:#ffd6ec;color:var(--text)}
+.flashcard{margin-top:14px}
+.flashcard-inner{width:100%;max-width:320px;margin:0 auto;min-height:120px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--pink-1);border-radius:10px;background:#ffeef7;padding:18px;box-shadow:0 0 8px rgba(0,0,0,0.06)}
+.delete-word-btn{position:absolute;right:24px;top:18px;background:transparent;border:none;font-size:1rem;cursor:pointer}
+#allWordsSection{background:var(--lavender);padding:12px;border-radius:8px;margin-top:12px;max-height:200px;overflow:auto}
+#allWordsList li{background:var(--pink-2);margin:6px;border-radius:6px;padding:8px;display:flex;justify-content:space-between;align-items:center}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--pink-1);color:#fff;padding:10px 14px;border-radius:10px;opacity:0;transition:opacity .3s;z-index:3000}
+.toast.show{opacity:1}
 
-  <title>Pinuno</title>
-  <link rel="stylesheet" href="style.css" />
+/* Quiz modal with Review mistakes button */
+#quizModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(92,75,125,0.6);z-index:2000}
+#quizBox{background:#fffafc;padding:12px;border-radius:8px;width:90%;max-width:520px;box-shadow:0 8px 24px rgba(0,0,0,0.25)}
+#quizHeader{display:flex;justify-content:space-between;align-items:center;background:var(--pink-1);color:#fff;padding:8px;border-radius:4px}
+#quizBody{padding:12px}
+.quiz-option{display:block;width:100%;padding:10px;margin:6px 0;border-radius:6px;border:2px solid var(--pink-1);background:#ffd6ec;cursor:pointer;text-align:left}
+.quiz-option.correct{background:#b6ffb6;border-color:#4caf50}
+.quiz-option.wrong{background:#ffb6b6;border-color:#d32f2f}
+.quiz-option:disabled{opacity:.9;cursor:default}
+@media(max-width:480px){h1{font-size:1.2rem}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>🌸 Pinuno</h1>
+  <div class="container" role="application" aria-label="Pinuno language trainer">
+    <h1>Pinuno</h1>
 
-<!-- Search Bar -->
-<div class="search-container">
-  <input 
-    type="text" 
-    id="searchInput" 
-    placeholder="🔍Search Filipino or English." 
-    autocomplete="off" 
-    inputmode="search"
-  />
-  <button id="closeSearchBtn" title="Close search">✖</button>
-  <ul id="searchSuggestions"></ul>
-</div>
-
-
-    <!-- Flashcard -->
-    <div class="flashcard" id="flashcard">
-      <button id="deleteWordBtn" class="delete-word-btn" style="display:none;">❌</button>
-      <div class="flashcard-inner">
-        <div class="flashcard-front">
-          <p id="cardFront">Tap a button to begin</p>
-        </div>
-        <div class="flashcard-back">
-          <p id="cardBack"></p>
-        </div>
+    <div class="form" aria-label="Add word form">
+      <div><label for="filipinoInput">Filipino</label><br><input id="filipinoInput" placeholder="halimbawa: salamat" /></div>
+      <div><label for="englishInput">English</label><br><input id="englishInput" placeholder="example: thank you" /></div>
+      <div class="button-group">
+        <button id="addWordBtn" class="btn btn-primary">Add Word</button>
+        <button id="showAllBtn" class="btn btn-secondary">Show All</button>
       </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="button-group nav-pair">
-      <button id="prevWordBtn" class="btn btn-secondary">⏮️ Previous</button>
-      <button id="nextWordBtn" class="btn btn-secondary">⏭️ Next</button>
-    </div>
-    <div class="button-group">
-      <button id="randomWordBtn" class="btn btn-secondary">🎲 Random</button>
-    </div>
+    <div class="flashcard" id="flashcardArea" aria-live="polite">
+      <button id="deleteFlashcardBtn" class="delete-word-btn" title="Delete word">🗑</button>
+      <div class="flashcard-inner"><div id="frontText">—</div></div>
 
-    <!-- Word Actions -->
-    <div class="button-group">
-      <button id="addToFavBtn" class="btn btn-secondary">⭐ Add to Favourite</button>
-<button id="toggleFavBtn" class="btn btn-secondary">📁 Favourite Words</button>
-      <button id="openAddWordBtn" class="btn btn-secondary">➕ Add Word</button>
+      <div class="button-group" style="margin-top:10px">
+        <button id="prevCardBtn" class="btn btn-secondary">Prev</button>
+        <button id="flipBtn" class="btn btn-primary">Flip</button>
+        <button id="nextCardBtn" class="btn btn-secondary">Next</button>
+      </div>
     </div>
 
-    <div id="popupMessage" class="popup"></div>
-
-<!-- Manual Add Prompt Modal -->
-<div id="manualAddPrompt" class="modal-overlay" style="display:none;">
-  <div class="modal">
-    <h2>Add Word</h2>
-    <p>Do you want to add "<span id="manualAddWord"></span>" manually?</p>
-    <div class="modal-buttons">
-      <button id="manualAddYes" class="btn btn-primary">Yes</button>
-      <button id="manualAddNo" class="btn btn-secondary">No</button>
+    <div style="margin-top:14px" class="button-group">
+      <button id="startQuizAllBtn" class="btn btn-primary">Quiz: All</button>
     </div>
-  </div>
-</div>
 
-
-    <!-- Learning Tools -->
-    <div class="button-group">
-    <button id="startQuizBtn" class="btn btn-primary">📝 Start Quiz</button>
-      <button id="openAllWordsBtn" class="btn btn-secondary">📖 Show All Words</button>
-    </div>
+    <section id="allWordsSection" hidden>
+      <h2 style="font-size:0.85rem;margin:0 0 8px 0">All Words</h2>
+      <ul id="allWordsList"></ul>
+    </section>
   </div>
 
-  <!-- Add Word Modal -->
-  <div id="addWordModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        ➕ Add Word
-        <button id="closeAddWordBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-field">
-          <input type="text" id="filipinoInput" placeholder="Filipino word" />
-        </div>
-        <div class="form-field">
-          <input type="text" id="englishInput" placeholder="English translation" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="saveWordBtn" class="btn btn-primary">✅ Save</button>
-        <button id="cancelAddWordBtn" class="btn btn-secondary">❌ Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- All Words Modal -->
-  <div id="allWordsModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        📖 All Words
-        <button id="closeAllWordsBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <ul id="allWordsList"></ul>
-      </div>
-      <div class="modal-footer">
-        <button id="closeAllWordsBtn2" class="btn btn-secondary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Favourite Words Modal -->
-  <div id="favouriteModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        ⭐ Favourite Words
-        <button id="closeFavBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <ul id="favouriteList"></ul>
-      </div>
-      <div class="modal-footer">
-        <button id="closeFavBtn2" class="btn btn-secondary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div id="deleteModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        Confirm Deletion
-        <button id="closeDeleteModalBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <p id="deleteMessage">Are you sure you want to delete this word?</p>
-      </div>
-      <div class="modal-footer">
-        <button id="confirmDeleteBtn" class="btn btn-primary">✅ Yes</button>
-        <button id="cancelDeleteBtn" class="btn btn-secondary">❌ No</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add from Search Confirmation Modal -->
-  <div id="addFromSearchModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window">
-      <div class="modal-header">
-        Add Word
-        <button id="closeAddFromSearchBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <p id="addFromSearchMessage"></p>
-      </div>
-      <div class="modal-footer">
-        <button id="confirmAddFromSearchBtn" class="btn btn-primary">✅ Yes</button>
-        <button id="cancelAddFromSearchBtn" class="btn btn-secondary">❌ No</button>
-      </div>
-    </div>
-  </div>
-
-<!-- Quiz Source Choice Modal -->
-<div id="quizChoiceModal" class="modal-overlay" style="display:none;">
-  <div class="modal-window">
-    <div class="modal-header">
-      📝 Choose Quiz Source
-     <button id="closeQuizChoiceBtn" class="modal-close-btn">✖</button>
-    </div>
-    <div class="modal-body" style="text-align:center;">
-      <p style="margin-bottom:1rem;">Which words do you want to be quizzed on?</p>
-      <button id="quizAllBtn" class="btn btn-primary">📚 All Words</button>
-      <button id="quizFavBtn" class="btn btn-secondary">⭐ Favourites</button>
-    </div>
-  </div>
-</div>
-
-  <!-- Quiz Modal -->
-  <div id="quizModal" class="modal-overlay" style="display:none;">
-    <div class="modal-window quiz-window">
-      <div class="modal-header">
-        📝 Quiz Mode
-        <button id="closeQuizBtn" class="modal-close-btn">✖</button>
-      </div>
-      <div class="modal-body">
-        <p id="quizQuestion"></p>
+  <div id="quizModal">
+    <div id="quizBox" role="dialog" aria-modal="true">
+      <div id="quizHeader"><div id="quizTitle">Quiz</div><button id="stopQuizBtn" class="btn btn-secondary">⏹ Stop Quiz</button></div>
+      <div id="quizBody">
+        <div id="quizQuestion" style="font-weight:bold;margin-bottom:8px"></div>
+        <div id="quizFeedback" style="min-height:22px;margin-bottom:8px"></div>
         <div id="quizOptions"></div>
-        <p id="quizFeedback"></p>
-      </div>
-      <div class="modal-footer">
-        <button id="nextQuizBtn" class="btn btn-secondary">Next</button>
-        <button id="stopQuizBtn" class="btn btn-secondary">⏹ Stop Quiz</button>
-        <button id="restartQuizBtn" class="btn btn-primary" style="display: none;">🔁 Restart Quiz</button>
-        <button id="reviewMistakesBtn" class="btn btn-secondary" style="display: none;">📚 Review Mistakes</button>
+        <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+          <button id="reviewMistakesBtn" class="btn btn-secondary" style="display:none">Review mistakes</button>
+          <button id="restartQuizBtn" class="btn btn-secondary" style="display:none">Restart</button>
+          <button id="nextQuizBtn" class="btn btn-primary">Next</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="script.js" defer></script>
+<script>
+/* ===== CONFIG: replace with your Apps Script Web App URL and TOKEN ===== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxajAX3ZMmLhq8i2VjoW4ai387e8aYC6S0fA8FS7jb_qXzjV-wpTW8OkF7nGOrN4cpf/exec';
+const TOKEN = '3d9f73ed-e008-42ed-b24d-8b49366efd8e';
+/* ============================================================ */
+
+const userId = localStorage.getItem('pinuno_user') || (() => {
+  const id = 'user_' + Math.random().toString(36).slice(2,9);
+  localStorage.setItem('pinuno_user', id);
+  return id;
+})();
+
+function showToast(text, timeout = 2000){ const t = document.getElementById('toast'); t.textContent = text; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), timeout); }
+
+/* API helpers */
+async function apiGet(params){
+  const qs = new URLSearchParams({ ...params, token: TOKEN }).toString();
+  const res = await fetch(API_URL + '?' + qs, { method:'GET', credentials:'omit' });
+  if(!res.ok) throw new Error('Network '+res.status);
+  return res.json();
+}
+async function apiPostForm(params){
+  const body = new URLSearchParams({ ...params, token: TOKEN }).toString();
+  const res = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+  if(!res.ok) throw new Error('Network '+res.status);
+  return res.json();
+}
+
+/* Normalize server row/object into consistent shape */
+function normalizeWord(raw){
+  return {
+    id: String(raw.id || raw[0] || raw['ID'] || raw['id'] || ''),
+    filipino: raw.filipino || raw[1] || raw['Filipino'] || raw['filipino'] || raw[2] || '',
+    english: raw.english || raw[2] || raw['English'] || raw['english'] || raw[1] || '',
+    source: raw.source || raw[3] || raw['source'] || 'main',
+    wrong_count: Number(raw.wrong_count || raw[6] || 0),
+    word_of_day_date: raw.word_of_day_date || raw[5] || ''
+  };
+}
+
+/* ===== Local cache & preload (reads sheet once into window.words) ===== */
+window.words = [];
+async function preloadWords(){
+  if (Array.isArray(window.words) && window.words.length) return window.words;
+  try{
+    const res = await apiGet({ action:'getWords' });
+    let data = [];
+    if (Array.isArray(res)) data = res;
+    else if (res && Array.isArray(res.words)) data = res.words;
+    else if (res && Array.isArray(res.data)) data = res.data;
+    else throw new Error('Unexpected getWords response');
+    window.words = data.map(normalizeWord);
+    return window.words;
+  }catch(err){
+    console.error('preloadWords failed', err);
+    window.words = [
+      { id:'demo-1', filipino:'salamat', english:'thank you', source:'main', wrong_count:0, word_of_day_date:''},
+      { id:'demo-2', filipino:'kamusta', english:'hello', source:'main', wrong_count:0, word_of_day_date:''},
+      { id:'demo-3', filipino:'paalam', english:'goodbye', source:'main', wrong_count:0, word_of_day_date:''},
+      { id:'demo-4', filipino:'mahal', english:'love', source:'main', wrong_count:0, word_of_day_date:''}
+    ];
+    return window.words;
+  }
+}
+
+/* ===== Flashcards (WOTD first) ===== */
+let flashOrder = [];
+let currentCardIndex = 0;
+
+function prepareFlashOrder(preferWOTD = true){
+  const ids = window.words.map(w=>w.id);
+  if(!ids.length){ flashOrder = []; return; }
+  const today = new Date().toISOString().slice(0,10);
+  const wotd = window.words.find(w => w.word_of_day_date === today);
+  if(wotd && preferWOTD){ const rest = ids.filter(id => id !== wotd.id); flashOrder = [wotd.id, ...rest]; currentCardIndex = 0; return; }
+  flashOrder = ids; currentCardIndex = 0;
+}
+
+function renderAllWordsList() {
+  const ul = document.getElementById('allWordsList');
+  // Update heading to include total; create heading element if missing
+  const section = document.getElementById('allWordsSection');
+  if (section) {
+    const heading = section.querySelector('h2');
+    const total = (Array.isArray(window.words) ? window.words.length : 0);
+    heading.textContent = `All Words — Total: ${total}`;
+  }
+
+  ul.innerHTML = '';
+
+  // small summary row: total words and user words count
+  const summaryCount = document.createElement('div');
+  summaryCount.style.fontSize = '0.8rem';
+  summaryCount.style.opacity = '0.9';
+  const userCount = (Array.isArray(window.words) ? window.words.filter(w => w.source === 'user').length : 0);
+  summaryCount.textContent = `Total: ${window.words.length} · User words: ${userCount}`;
+  const summaryLi = document.createElement('li');
+  summaryLi.style.background = 'transparent';
+  summaryLi.style.boxShadow = 'none';
+  summaryLi.style.padding = '4px 8px';
+  summaryLi.appendChild(summaryCount);
+  ul.appendChild(summaryLi);
+
+  const pool = window.words.slice().sort((a, b) => (a.filipino || '').localeCompare(b.filipino || ''));
+  for (const w of pool) {
+    const li = document.createElement('li');
+    const left = document.createElement('div');
+    left.style.display = 'flex';
+    left.style.flexDirection = 'column';
+    const main = document.createElement('div');
+    main.textContent = `${w.filipino} — ${w.english}`;
+    main.style.fontSize = '0.9rem';
+
+    left.appendChild(main);
+
+    const right = document.createElement('div');
+    const del = document.createElement('button');
+    del.className = 'btn';
+    del.textContent = '🗑';
+    del.style.fontSize = '0.9rem';
+    if (w.source !== 'user') del.style.opacity = 0.35;
+    del.addEventListener('click', async () => {
+      if (w.source !== 'user') { showToast('Cannot delete main word'); return; }
+      if (!confirm('Delete this user word?')) return;
+      try {
+        const r = await apiPostForm({ action: 'deleteWord', word_id: w.id, user_id: userId });
+        if (r && r.deleted) { showToast('Deleted'); await reloadWords(); } else showToast('Delete failed');
+      } catch { showToast('Network error'); }
+    });
+    right.appendChild(del);
+
+    li.appendChild(left);
+    li.appendChild(right);
+    ul.appendChild(li);
+  }
+}
+
+
+function renderCard(){
+  const front = document.getElementById('frontText');
+  if(!flashOrder.length){ front.textContent='No words'; return; }
+  const id = flashOrder[currentCardIndex];
+  const w = window.words.find(x=>x.id===id);
+  front.textContent = w ? w.filipino : '—';
+}
+
+document.getElementById('prevCardBtn').addEventListener('click', () => {
+  if(!flashOrder.length) return;
+  currentCardIndex = (currentCardIndex - 1 + flashOrder.length) % flashOrder.length; renderCard();
+});
+document.getElementById('nextCardBtn').addEventListener('click', () => {
+  if(!flashOrder.length) return;
+  currentCardIndex = (currentCardIndex + 1) % flashOrder.length; renderCard();
+});
+document.getElementById('flipBtn').addEventListener('click', () => {
+  const id = flashOrder[currentCardIndex]; const w = window.words.find(x=>x.id===id); if(!w) return;
+  const front = document.getElementById('frontText'); front.textContent = w.english; setTimeout(()=>front.textContent = w.filipino, 1200);
+});
+
+async function reloadWords(){ await preloadWords(); prepareFlashOrder(true); renderAllWordsList(); renderCard(); }
+
+/* Add word */
+document.getElementById('addWordBtn').addEventListener('click', async () => {
+  const filipino = document.getElementById('filipinoInput').value.trim();
+  const english = document.getElementById('englishInput').value.trim();
+  if(!filipino || !english){ showToast('Fill both fields'); return; }
+  try{
+    const r = await apiPostForm({ action:'addWord', filipino, english, user_id: userId });
+    if(r && r.success){ showToast('Added'); document.getElementById('filipinoInput').value=''; document.getElementById('englishInput').value=''; await reloadWords(); }
+    else showToast('Add failed');
+  }catch(e){ console.error(e); showToast('Network error'); }
+});
+
+/* Show All toggle */
+document.getElementById('showAllBtn').addEventListener('click', async () => {
+  const sec = document.getElementById('allWordsSection'); sec.hidden = !sec.hidden; if(!sec.hidden) await reloadWords();
+});
+
+/* ===== QUIZ: questions built locally, record wrong_count updates immediately ===== */
+
+/* Utilities */
+function shuffled(arr){ const a = Array.isArray(arr) ? [...arr] : []; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* pick 3 distinct distractor English strings from window.words excluding correctEnglish */
+function pickThreeDistractors(correctEnglish){
+  const pool = (Array.isArray(window.words) ? window.words : []).map(w => String(w.english || '').trim()).filter(txt => txt && txt !== correctEnglish);
+  const uniq = Array.from(new Set(pool));
+  if(uniq.length <= 3) return shuffled(uniq);
+  const picked = []; const used = new Set();
+  while(picked.length < 3){
+    const i = Math.floor(Math.random()*uniq.length);
+    if(used.has(i)) continue;
+    used.add(i); picked.push(uniq[i]);
+  }
+  return picked;
+}
+
+/* Build questions from a provided pool (no network calls) */
+function buildQuizQuestionsFromPool(poolWords, maxQuestions = 10){
+  if(!Array.isArray(poolWords) || poolWords.length === 0) return [];
+  const wordsCopy = shuffled(poolWords);
+  const qCount = Math.min(maxQuestions, wordsCopy.length);
+  return wordsCopy.slice(0,qCount).map(q => {
+    const distractorTexts = pickThreeDistractors(String(q.english || '').trim());
+    const opts = shuffled([ ...distractorTexts.map(t=>({id:null, english:t})), { id:q.id, english: String(q.english || '').trim() } ]);
+    const uniq = []; const seen = new Set();
+    for(const o of opts){
+      const txt = String(o.english || '').trim();
+      if(!txt || seen.has(txt)) continue;
+      seen.add(txt);
+      if(txt === (q.english||'')) uniq.unshift({ id:q.id, english:txt }); else uniq.push({ id:o.id, english:txt });
+      if(uniq.length >= 4) break;
+    }
+    if(!uniq.find(u=>u.id===q.id)) uniq.push({ id:q.id, english: String(q.english||'').trim() });
+    const finalOpts = uniq.slice(0,4);
+    return { qid: q.id, filipino: q.filipino, correctId: q.id, options: finalOpts };
+  });
+}
+
+/* Quiz state & elements */
+let quizWords = []; let quizIndex = 0; let score = 0; let incorrectWords = []; let quizAnswered = false; let stopClickedOnce = false;
+const quizModal = document.getElementById('quizModal');
+const quizQuestion = document.getElementById('quizQuestion');
+const quizOptions = document.getElementById('quizOptions');
+const quizFeedback = document.getElementById('quizFeedback');
+const stopQuizBtn = document.getElementById('stopQuizBtn');
+const nextQuizBtn = document.getElementById('nextQuizBtn');
+const restartQuizBtn = document.getElementById('restartQuizBtn');
+const reviewMistakesBtn = document.getElementById('reviewMistakesBtn');
+
+/* Start quiz wrapper: ensures preload and builds questions from local cache */
+async function startQuizWrapper(maxQuestions = 10, source = 'all'){
+  await preloadWords();
+  let pool = [...window.words];
+  if(source === 'favourites' && Array.isArray(window.favouriteWords) && window.favouriteWords.length) pool = [...window.favouriteWords];
+  if(pool.length < 4){ showToast('⚠️ Add at least 4 words to start the quiz.'); return; }
+  const questions = buildQuizQuestionsFromPool(pool, maxQuestions);
+  if(!questions.length){ showToast('Not enough words'); return; }
+  quizWords = questions; quizIndex = 0; score = 0; incorrectWords = []; quizAnswered = false; stopClickedOnce = false;
+  quizModal.style.display = 'flex'; quizOptions.innerHTML = ''; quizFeedback.textContent = ''; restartQuizBtn.style.display = 'none'; reviewMistakesBtn.style.display = 'none'; stopQuizBtn.textContent = '⏹ Stop Quiz'; nextQuizBtn.style.display = 'inline-block';
+  nextQuizQuestion();
+}
+
+/* nextQuizQuestion: builds 3 random distractors + 1 correct, records wrongs and updates local wrong_count */
+function nextQuizQuestion(){
+  if(quizIndex >= quizWords.length){ endQuiz(false); return; }
+  quizAnswered = false;
+  const current = quizWords[quizIndex];
+  const correctOption = (current.options && current.options.find(o => o.id === current.correctId)) || (current.options && current.options[0]) || { english: '' };
+  const correctEnglish = String(correctOption.english || '').trim();
+
+  let distractors = pickThreeDistractors(correctEnglish);
+  if(distractors.length < 3){
+    const pool = (Array.isArray(window.words) ? window.words : []).map(w=>String(w.english||'').trim()).filter(t=>t && t!==correctEnglish && !distractors.includes(t));
+    distractors = [...distractors, ...shuffled(pool).slice(0, 3 - distractors.length)];
+  }
+  let optionTexts = Array.from(new Set([...distractors.filter(Boolean), correctEnglish])).slice(0,4);
+  if(!optionTexts.includes(correctEnglish)){ if(optionTexts.length >= 4) optionTexts[optionTexts.length-1] = correctEnglish; else optionTexts.push(correctEnglish); }
+  const finalOptions = shuffled(optionTexts).slice(0,4);
+
+  quizQuestion.textContent = `What does "${current.filipino}" mean?`;
+  quizFeedback.textContent = ''; quizOptions.innerHTML = '';
+  const buttons = [];
+  for(const txt of finalOptions){
+    const btn = document.createElement('button'); btn.textContent = txt; btn.className = 'quiz-option'; btn.type='button';
+    btn.addEventListener('click', async () => {
+      if(buttons.some(b=>b.disabled)) return;
+      buttons.forEach(b=>b.disabled=true);
+      const isCorrect = txt === correctEnglish;
+      if(isCorrect){ btn.classList.add('correct'); quizFeedback.textContent = '✅ Correct!'; score++; }
+      else {
+        btn.classList.add('wrong'); quizFeedback.textContent = `❌ Wrong. Correct answer: ${correctEnglish}`;
+        incorrectWords.push({ filipino: current.filipino, english: correctEnglish });
+        // update local wrong_count so backend and cache remain meaningful
+        const localWord = window.words.find(w => w.id === (current.correctId || current.qid));
+        if (localWord) { localWord.wrong_count = (Number(localWord.wrong_count) || 0) + 1; }
+      }
+
+      try {
+        const r = await apiPostForm({ action:'recordAttempt', user_id: userId, word_id: current.correctId || current.qid, correct: isCorrect ? 'TRUE' : 'FALSE' });
+        if (r && typeof r.updatedWrongCount !== 'undefined') {
+          const local = window.words.find(w => w.id === (current.correctId || current.qid));
+          if (local) local.wrong_count = Number(r.updatedWrongCount);
+        }
+      } catch(e) { console.warn('recordAttempt failed', e); }
+
+    });
+    buttons.push(btn); quizOptions.appendChild(btn);
+  }
+  quizIndex++;
+}
+
+/* End / stop / restart / review */
+function endQuiz(stoppedEarly){
+  nextQuizBtn.style.display = 'none';
+  quizOptions.innerHTML = '';
+  quizQuestion.textContent = stoppedEarly ? "Quiz stopped early." : "Quiz complete!";
+  quizFeedback.textContent = `Your score: ${score}/${quizIndex}`;
+  // Show review button only when there are mistakes recorded this session
+  reviewMistakesBtn.style.display = incorrectWords.length > 0 ? 'inline-block' : 'none';
+  restartQuizBtn.style.display = 'inline-block';
+}
+function stopQuiz(){ if(!stopClickedOnce){ endQuiz(true); stopQuizBtn.textContent='Close Quiz'; stopClickedOnce=true; } else{ quizModal.style.display='none'; stopQuizBtn.textContent='⏹ Stop Quiz'; stopClickedOnce=false; } }
+function restartQuiz(){ quizIndex=0; score=0; incorrectWords=[]; quizAnswered=false; stopClickedOnce=false; quizOptions.innerHTML=''; quizFeedback.textContent=''; restartQuizBtn.style.display='none'; reviewMistakesBtn.style.display='none'; nextQuizBtn.style.display='inline-block'; stopQuizBtn.textContent='⏹ Stop Quiz'; nextQuizQuestion(); }
+
+/* Show the list of incorrect words collected in this quiz session */
+function showIncorrectWords(){
+  quizQuestion.textContent = 'Your mistakes to review:';
+  quizFeedback.textContent = '';
+  quizOptions.innerHTML = '';
+  if(!incorrectWords.length){
+    const none = document.createElement('div'); none.textContent = 'No mistakes — great job!'; quizOptions.appendChild(none); return;
+  }
+  // Show unique mistakes in the order they were recorded
+  const seen = new Set();
+  for(const w of incorrectWords){
+    const key = `${w.filipino}||${w.english}`;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    const row = document.createElement('div'); row.style.margin = '6px 0'; row.textContent = `${w.filipino} — ${w.english}`;
+    quizOptions.appendChild(row);
+  }
+}
+
+/* Wire quiz buttons */
+document.getElementById('startQuizAllBtn').onclick = () => startQuizWrapper(10, 'all');
+nextQuizBtn.addEventListener('click', () => nextQuizQuestion());
+stopQuizBtn.addEventListener('click', () => stopQuiz());
+restartQuizBtn.addEventListener('click', () => restartQuiz());
+reviewMistakesBtn.addEventListener('click', () => showIncorrectWords());
+
+/* Review wrong main-page button removed earlier; Show All still toggles list (wrong_count hidden) */
+async function reloadWords(){ await preloadWords(); prepareFlashOrder(true); renderAllWordsList(); renderCard(); }
+
+/* Init */
+(async function init(){
+  await preloadWords();
+  prepareFlashOrder(true);
+  renderAllWordsList();
+  renderCard();
+  setInterval(() => {
+    const last = localStorage.getItem('pinuno_date') || '';
+    const today = new Date().toISOString().slice(0,10);
+    if(last !== today){ localStorage.setItem('pinuno_date', today); apiGet({ action:'setWordOfDay', date: today }).then(()=>reloadWords()).catch(()=>{}); }
+  }, 60_000);
+})();
+</script>
 </body>
 </html>
+```
